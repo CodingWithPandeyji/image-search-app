@@ -1,59 +1,54 @@
-var total_pages = 1;
-var current_page = 1;
-var userInput = "";
+const accessKey = "RZEIOVfPhS7vMLkFdd2TSKGFBS4o9_FmcV1Nje3FSjw";
 
-function searchImages(text)
-{
-    fetch(`https://api.unsplash.com/search/photos?client_id=BemwEqDMBuNz3LFZPpjbEKxJTbgH4v3QJx3A5G1IDko&query=${text}&page=${current_page}`)
-    .then(res => res.json())
-    .then( data =>{
-        let main = document.getElementsByClassName("images")[0]
-        main.innerHTML = ""
-        data.results.forEach( (item) => {
-            let div = document.createElement("div")
-            let img = document.createElement("img")
-            img.src = item.urls.thumb
-            img.classList.add("img")
-            let p = document.createElement("p")
-            p.innerText = item.alt_description
-            div.append(img,p)
-            main.append(div)
-        })
+const formEl = document.querySelector("form");
+const searchInputEl = document.getElementById("search-input");
+const searchResultsEl = document.querySelector(".search-results");
+const showMoreButtonEl = document.getElementById("show-more-button");
 
-        total_pages  = data.total_pages
-        // sow total pages and current page on frotnend
-        document.getElementById("tp").innerText = total_pages;
-        document.getElementById("cp").innerText = current_page;
-    })
-    .catch(err => console.log(err))
+let inputData = "";
+let page = 1;
+
+async function searchImages() {
+  inputData = searchInputEl.value;
+  const url = `https://api.unsplash.com/search/photos?page=${page}&query=${inputData}&client_id=${accessKey}`;
+
+  const response = await fetch(url);
+  const data = await response.json();
+  if (page === 1) {
+    searchResultsEl.innerHTML = "";
+  }
+
+  const results = data.results;
+
+  results.map((result) => {
+    const imageWrapper = document.createElement("div");
+    imageWrapper.classList.add("search-result");
+    const image = document.createElement("img");
+    image.src = result.urls.small;
+    image.alt = result.alt_description;
+    const imageLink = document.createElement("a");
+    imageLink.href = result.links.html;
+    imageLink.target = "_blank";
+    imageLink.textContent = result.alt_description;
+
+    imageWrapper.appendChild(image);
+    imageWrapper.appendChild(imageLink);
+    searchResultsEl.appendChild(imageWrapper);
+  });
+
+  page++;
+
+  if (page > 1) {
+    showMoreButtonEl.style.display = "block";
+  }
 }
 
-function next()
-{
-    if(current_page < total_pages)
-    {
-        current_page += 1
-        searchImages(userInput)
-    }
+formEl.addEventListener("submit", (event) => {
+  event.preventDefault();
+  page = 1;
+  searchImages();
+});
 
-}
-
-function prev()
-{
-    if(current_page > 1)
-    {
-    current_page -= 1
-    searchImages(userInput)
-    }
-    
-}
-
-
-document.getElementById("next").addEventListener("click",next)
-document.getElementById("prev").addEventListener("click",prev)
-document.getElementById("form").addEventListener("submit", (e) => {
-    e.preventDefault();
-    let text = document.getElementsByTagName("input")[0].value
-    userInput = text;
-    searchImages(text)
-})
+showMoreButtonEl.addEventListener("click", () => {
+  searchImages();
+});
